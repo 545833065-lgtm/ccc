@@ -69,6 +69,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--brand)}
     </div>
   </div>
 
+  <div id="sysStatus" style="background:#fff;border-radius:12px;padding:12px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06);font-size:12px"></div>
   <button class="btn btn-ok" id="copyBtn2" style="margin-bottom:12px;padding:16px;font-size:17px">📋 一键复制通告</button>
 
   <div class="card">
@@ -212,15 +213,39 @@ document.querySelectorAll('#sysGrid .opt').forEach(el=>{
     document.querySelectorAll('#sysGrid .opt').forEach(x=>x.classList.remove('on'));
     el.classList.add('on');
     sys=el.dataset.sys;try{localStorage.setItem('noticeSys',sys)}catch(e){}
+    renderStatus();
     gen();
   };
 });
+function getSysState(s){try{return localStorage.getItem('state_'+s)}catch(e){return ''}}
+function setSysState(s,st){try{localStorage.setItem('state_'+s,st)}catch(e){}}
+function renderStatus(){
+  var systems=['A系统','B系统','C系统','D系统'];
+  var html='<b style="color:#0c4a6e">各系统状态：</b> ';
+  systems.forEach(function(s){
+    var st=getSysState(s);
+    var color=st==='on'?'#16a34a':(st==='off'?'#dc2626':'#999');
+    var txt=st==='on'?'●开机':(st==='off'?'●停机':'○未知');
+    html+='<span style="margin-right:10px;color:'+color+'">'+s.replace('系统','')+txt+'</span>';
+  });
+  document.getElementById('sysStatus').innerHTML=html;
+}
 // 操作选择
-document.querySelectorAll('#opGrid .opt').forEach(el=>{
-  el.onclick=()=>{
-    document.querySelectorAll('#opGrid .opt').forEach(x=>x.classList.remove('on'));
+document.querySelectorAll('#opGrid .opt').forEach(function(el){
+  el.onclick=function(){
+    var newOp=el.dataset.op;
+    var currentState=getSysState(sys);
+    // 开机操作：如果系统已是开机状态，提醒确认
+    if(newOp==='充冷开机' && currentState==='on'){
+      if(!confirm(sys+'当前已是开机状态，确认再次发送开机通告？')) return;
+    }
+    // 停机操作：如果系统已是停机状态，提醒确认
+    if(newOp==='放冷停机' && currentState==='off'){
+      if(!confirm(sys+'当前已是停机状态，确认再次发送停机通告？')) return;
+    }
+    document.querySelectorAll('#opGrid .opt').forEach(function(x){x.classList.remove('on')});
     el.classList.add('on');
-    op=el.dataset.op;try{localStorage.setItem('noticeOp',op)}catch(e){}
+    op=newOp;try{localStorage.setItem('noticeOp',op)}catch(e){}
     if(op==='放冷停机'){document.getElementById('tankTemp').value='12.5';}
     else{document.getElementById('tankTemp').value='17';}
     gen();
@@ -302,7 +327,11 @@ function doCopy(cb){
 }
 document.getElementById('copyBtn2').onclick=function(){
   doCopy(function(){
-    document.getElementById('copyBtn2').textContent='✅ 已复制';
+    // 保存系统状态
+    if(op==='充冷开机') setSysState(sys,'on');
+    else setSysState(sys,'off');
+    renderStatus();
+    document.getElementById('copyBtn2').textContent='✅ 已复制，状态已记录';
     setTimeout(function(){document.getElementById('copyBtn2').textContent='📋 一键复制通告'},2000);
   });
 };
@@ -316,6 +345,7 @@ document.getElementById('openWxBtn').onclick=function(){
   });
 };
 
+renderStatus();
 gen();
 </script>
 </body>
