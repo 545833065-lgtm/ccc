@@ -70,10 +70,13 @@ input:focus,select:focus,textarea:focus{border-color:var(--brand)}
       <div class="opt on" data-op="放冷停机">放冷（停机）</div>
       <div class="opt" data-op="充冷开机">充冷（开机）</div>
     </div>
+    <div class="opt-grid" style="margin-top:10px" id="unitGrid">
+      <div class="opt on" data-unit="1号机">1号机</div>
+      <div class="opt" data-unit="2号机">2号机</div>
+    </div>
   </div>
 
   <div id="sysStatus" style="background:#fff;border-radius:12px;padding:12px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06);font-size:12px"></div>
-  <button class="btn btn-ok" id="copyBtn2" style="margin-bottom:12px;padding:16px;font-size:17px">📋 一键复制通告</button>
 
   <div class="card">
     <h2 style="cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="var b=document.getElementById('dataBody');if(b.style.display==='none'){b.style.display='block'}else{b.style.display='none'}"><span>② 关键数据</span><span style="font-size:12px;color:var(--muted)">▸ 折叠/展开</span></h2>
@@ -156,7 +159,7 @@ function checkPwd(){
     document.getElementById('pwdInput').value='';
   }
 }
-var sys='A系统', op='放冷停机';
+var sys='A系统', op='放冷停机', unit='1号机';
 try{
   var ss=localStorage.getItem('noticeSys');
   if(ss) sys=ss;
@@ -254,6 +257,15 @@ document.querySelectorAll('#opGrid .opt').forEach(function(el){
     gen();
   };
 });
+// 机号选择
+document.querySelectorAll('#unitGrid .opt').forEach(function(el){
+  el.onclick=function(){
+    document.querySelectorAll('#unitGrid .opt').forEach(function(x){x.classList.remove('on')});
+    el.classList.add('on');
+    unit=el.dataset.unit;
+    gen();
+  };
+});
 // 告警选择
 document.querySelectorAll('#alarmRow .chk').forEach(el=>{
   el.onclick=()=>{
@@ -286,15 +298,15 @@ function gen(){
   let checkItem, reason;
   if(op==='放冷停机'){
     checkItem=`【${sys}蓄冷罐放冷开始通告】[检查项目]:
-1、检查确认1#冷站制冷单元预冷模式对蓄冷罐放冷
+1、检查确认${unit.replace("号机","#")}冷站制冷单元预冷模式对蓄冷罐放冷
 2、制冷单元所有阀门、冷冻泵、冷却泵、冷却塔状态检查确认正常
-3、确认1运行正常，设备已安全停运`;
+3、确认${unit}运行正常，设备已安全停运`;
     reason=`【放冷原因】:当前蓄冷罐温度达到${tT}℃`;
   } else {
     checkItem=`【${sys}蓄冷罐充冷开始通告】[检查项目]:
-1、检查确认1#冷站制冷单元预冷模式对蓄冷罐充冷，开启反冲冷模式
+1、检查确认${unit.replace("号机","#")}冷站制冷单元预冷模式对蓄冷罐充冷，开启反冲冷模式
 2、制冷单元所有阀门、冷冻泵、冷却泵、冷却塔状态检查确认正常
-3、确认1运行正常，开机条件满足`;
+3、确认${unit}运行正常，开机条件满足`;
     reason=`【充冷原因】:当前蓄冷罐温度达到${tT}℃`;
   }
 
@@ -328,18 +340,11 @@ function doCopy(cb){
     document.execCommand('copy');document.body.removeChild(ta);ok();
   }
 }
-document.getElementById('copyBtn2').onclick=function(){
+document.getElementById('openWxBtn').onclick=function(){
   doCopy(function(){
-    // 保存系统状态
     if(op==='充冷开机') setSysState(sys,'on');
     else setSysState(sys,'off');
     renderStatus();
-    document.getElementById('copyBtn2').textContent='✅ 已复制，状态已记录';
-    setTimeout(function(){document.getElementById('copyBtn2').textContent='📋 一键复制通告'},2000);
-  });
-};
-document.getElementById('openWxBtn').onclick=function(){
-  doCopy(function(){
     document.getElementById('openWxBtn').textContent='✅ 已复制，正在打开微信...';
     setTimeout(function(){
       window.location.href='weixin://';
