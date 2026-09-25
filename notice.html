@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0c4a6e">
+<title>设备开关机通告生成器</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--brand:#0c4a6e;--brand-l:#e0f2fe;--ok:#16a34a;--bad:#dc2626;--bg:#f1f5f9;--card:#fff;--line:#e2e8f0;--ink:#0f172a;--muted:#64748b}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);padding-bottom:40px}
+.hero{background:linear-gradient(135deg,#0c4a6e,#0369a1);color:#fff;padding:24px 18px 20px}
+.hero h1{font-size:20px}
+.hero p{font-size:12px;opacity:.8;margin-top:4px}
+.wrap{padding:14px}
+.card{background:var(--card);border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.card h2{font-size:15px;margin-bottom:12px;color:var(--brand)}
+.fld{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+input,select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:15px;background:#fff;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--brand)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.opt-grid{display:flex;flex-wrap:wrap;gap:8px}
+.opt{padding:8px 14px;border:1.5px solid var(--line);border-radius:20px;font-size:13px;cursor:pointer;background:#fff}
+.opt.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.preview{background:#1e293b;color:#e2e8f0;border-radius:10px;padding:14px;font-size:13px;line-height:1.8;white-space:pre-wrap;word-break:break-all;font-family:ui-monospace,"SF Mono",Menlo,monospace;max-height:400px;overflow-y:auto}
+.btn{display:block;width:100%;padding:14px;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;text-align:center}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-ok{background:var(--ok);color:#fff;margin-top:10px}
+.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;margin-right:4px}
+.tag-a{background:#dbeafe;color:#1e40af}
+.tag-b{background:#fce7f3;color:#9d174d}
+.tag-c{background:#d1fae5;color:#065f46}
+.chk-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chk{padding:6px 10px;border:1px solid var(--line);border-radius:6px;font-size:12px;cursor:pointer;background:#fff}
+.chk.on{background:var(--bad-l);border-color:var(--bad);color:var(--bad)}
+</style>
+</head>
+<body>
+<div id="loginMask" style="position:fixed;inset:0;background:linear-gradient(135deg,#0c4a6e,#0369a1);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px">
+  <div style="background:#fff;border-radius:16px;padding:30px 24px;width:100%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="text-align:center;font-size:40px;margin-bottom:10px">🔐</div>
+    <h3 style="text-align:center;margin-bottom:6px">请输入访问密码</h3>
+    <p style="text-align:center;font-size:12px;color:#999;margin-bottom:20px">内部工具，请勿外传<br><span id="expHint" style="color:#f59e0b"></span></p>
+    <input type="password" id="pwdInput" placeholder="输入密码" style="width:100%;padding:12px;border:2px solid #e2e8f0;border-radius:10px;font-size:16px;text-align:center;outline:none" onkeydown="if(event.keyCode===13||event.which===13){checkPwd()}">
+    <button onclick="checkPwd()" style="width:100%;margin-top:12px;padding:12px;background:#0c4a6e;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer">进 入</button>
+    <p id="pwdErr" style="color:#dc2626;font-size:12px;text-align:center;margin-top:10px;display:none">密码错误，请重试</p>
+  </div>
+</div>
+<div id="appMain">
+<div class="hero">
+  <h1>📢 设备开关机通告生成器</h1>
+
+</div>
+<div class="wrap">
+
+  <div class="card">
+    <h2>① 系统与操作</h2>
+    <div class="opt-grid" id="sysGrid">
+      <div class="opt on" data-sys="A系统"><span class="tag tag-a">A</span>A系统蓄冷罐</div>
+      <div class="opt" data-sys="B系统"><span class="tag tag-b">B</span>B系统蓄冷罐</div>
+      <div class="opt" data-sys="C系统"><span class="tag tag-c">C</span>C系统蓄冷罐</div>
+      <div class="opt" data-sys="D系统"><span class="tag" style="background:#fef3c7;color:#92400e">D</span>D系统蓄冷罐</div>
+    </div>
+    <div class="opt-grid" style="margin-top:10px" id="opGrid">
+      <div class="opt on" data-op="放冷停机">放冷（停机）</div>
+      <div class="opt" data-op="充冷开机">充冷（开机）</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="var b=document.getElementById('dataBody');if(b.style.display==='none'){b.style.display='block'}else{b.style.display='none'}"><span>② 关键数据</span><span style="font-size:12px;color:var(--muted)">▸ 折叠/展开</span></h2>
+    <div id="dataBody" style="display:none">
+    <div class="row" style="margin-bottom:10px">
+      <div><label class="fld">蓄冷罐温度(℃)</label><input type="number" id="tankTemp" step="0.1" value="12.5"></div>
+      <div><label class="fld">室外湿球温度(℃) <span id="wbStatus" style="color:var(--ok);font-size:11px">●实时</span></label><input type="number" id="outTemp" step="0.1" value="23.8"></div>
+    </div>
+    <div style="margin-bottom:10px;background:var(--brand-l);padding:10px 12px;border-radius:8px;font-size:13px;color:var(--brand-d)">⏱ 自动使用当前时间：<b id="nowTime"></b></div>
+    <div style="margin-bottom:10px">
+      <label class="fld">制冷模式</label>
+      <select id="coolMode">
+        <option value="机械制冷模式">机械制冷模式</option>
+        <option value="自然冷却模式">自然冷却模式</option>
+        <option value="混合模式">混合模式</option>
+      </select>
+    </div>
+    <div>
+      <label class="fld">当班人员（空格分隔）</label>
+      <input type="text" id="operators" value="张乐 王伟 黄晨 刘好 梁殿俊 陈飞鹏">
+    </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="var b=document.getElementById('alarmBody');b.style.display=b.style.display==='none'?'block':'none'"><span>③ 告警/影响项</span><span style="font-size:12px;color:var(--muted)">▸ 折叠/展开</span></h2>
+    <div id="alarmBody" style="display:none">
+    <div class="chk-row" id="alarmRow">
+      <div class="chk on" data-a="末端压差告警">末端压差告警</div>
+      <div class="chk on" data-a="供水温度短暂升高">供水温度短暂升高</div>
+      <div class="chk on" data-a="冷机电流百分比过高">冷机电流百分比过高</div>
+      <div class="chk on" data-a="冷冻水供水阀门无冗余告警">冷冻水供水阀门无冗余告警</div>
+      <div class="chk on" data-a="冷却水断流(星云推送相关告警)">冷却水断流(星云推送相关告警)</div>
+    </div>
+    <div style="margin-top:8px">
+      <label class="fld">其他补充（每行一条，选填）</label>
+      <textarea id="extra" rows="2" placeholder="如：2号泵运行异常等"></textarea>
+    </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>④ 生成结果</h2>
+    <div class="preview" id="preview"></div>
+    <button class="btn btn-ok" id="copyBtn">📋 一键复制通告</button>
+  </div>
+
+</div>
+</div>
+
+<script>
+var DAYS=30;
+function getTime(){try{return parseInt(localStorage.getItem('noticeTime'))||0}catch(e){return 0}}
+function saveTime(){try{localStorage.setItem('noticeTime',Date.now())}catch(e){}}
+function isExpired(){return (Date.now()-getTime())>DAYS*24*60*60*1000}
+function leftDays(){return Math.ceil((DAYS*24*60*60*1000-(Date.now()-getTime()))/(24*60*60*1000))}
+
+if(getTime()>0 && !isExpired()){
+  document.getElementById('loginMask').style.display='none';
+}
+
+function showExpHint(){
+  var el=document.getElementById('expHint');
+  if(getTime()>0 && !isExpired()){
+    el.textContent='有效期剩余 '+leftDays()+' 天';
+  } else if(getTime()>0 && isExpired()){
+    el.textContent='已到期，请输入授权码续期';
+  }
+}
+showExpHint();
+function checkPwd(){
+  var v=document.getElementById('pwdInput').value.trim();
+  var err=document.getElementById('pwdErr');
+  if(v==='20260926'||v==='EXT20261026'||v==='EXT20261126'||v==='EXT20261226'){
+    saveTime();
+    document.getElementById('loginMask').style.display='none';
+  } else {
+    err.textContent='密码错误，请重试';
+    err.style.display='block';
+    document.getElementById('pwdInput').value='';
+  }
+}
+let sys='A系统', op='放冷停机';
+let alarms=new Set(['末端压差告警','供水温度短暂升高','冷机电流百分比过高','冷冻水供水阀门无冗余告警','冷却水断流(星云推送相关告警)']);
+
+function updateNow(){
+  const n=new Date();
+  document.getElementById('nowTime').textContent=n.toLocaleString('zh-CN',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+}
+updateNow();
+setInterval(updateNow,1000);
+
+// 实时获取镇江湿球温度（Open-Meteo免费API）
+function fetchWetBulb(){
+  // 镇江经纬度
+  var lat=31.9, lon=118.85;
+  fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,relative_humidity_2m&timezone=Asia/Shanghai')
+    .then(function(r){return r.json()})
+    .then(function(d){
+      if(d.current){
+        var T=d.current.temperature_2m;
+        var RH=d.current.relative_humidity_2m;
+        // Stull湿球温度近似公式
+        var Tw=T*Math.atan(0.151977*Math.sqrt(RH+8.313659))
+          +Math.atan(T+RH)
+          -Math.atan(RH-1.676331)
+          +0.00391838*Math.pow(RH,1.5)*Math.atan(0.023101*RH)
+          -4.686035;
+        Tw=Math.round(Tw*10)/10;
+        document.getElementById('outTemp').value=Tw;
+        document.getElementById('wbStatus').textContent='●实时 '+T+'℃/'+RH+'%';
+        gen();
+      }
+    })
+    .catch(function(){
+      document.getElementById('wbStatus').textContent='●手动';
+      document.getElementById('wbStatus').style.color='#999';
+    });
+}
+fetchWetBulb();
+setInterval(fetchWetBulb,10*60*1000);
+
+// 系统选择
+document.querySelectorAll('#sysGrid .opt').forEach(el=>{
+  el.onclick=()=>{
+    document.querySelectorAll('#sysGrid .opt').forEach(x=>x.classList.remove('on'));
+    el.classList.add('on');
+    sys=el.dataset.sys;
+    gen();
+  };
+});
+// 操作选择
+document.querySelectorAll('#opGrid .opt').forEach(el=>{
+  el.onclick=()=>{
+    document.querySelectorAll('#opGrid .opt').forEach(x=>x.classList.remove('on'));
+    el.classList.add('on');
+    op=el.dataset.op;
+    if(op==='放冷停机'){document.getElementById('tankTemp').value='12.5';}
+    else{document.getElementById('tankTemp').value='17';}
+    gen();
+  };
+});
+// 告警选择
+document.querySelectorAll('#alarmRow .chk').forEach(el=>{
+  el.onclick=()=>{
+    el.classList.toggle('on');
+    if(alarms.has(el.dataset.a)) alarms.delete(el.dataset.a); else alarms.add(el.dataset.a);
+    gen();
+  };
+});
+
+// 实时生成
+document.querySelectorAll('input,select,textarea').forEach(el=>{
+  el.addEventListener('input',gen);
+  el.addEventListener('change',gen);
+});
+
+function gen(){
+  const tT=document.getElementById('tankTemp').value||'--';
+  const oT=document.getElementById('outTemp').value||'--';
+  const n=new Date();
+  const sD=n.toISOString().slice(0,10);
+  const sT=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+  const cm=document.getElementById('coolMode').value;
+  const ops=document.getElementById('operators').value.trim();
+  const extra=document.getElementById('extra').value.trim();
+
+  // 日期格式化
+  const d=new Date(sD);
+  const fmtDate=`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日${sT.replace(':','点')}分`;
+
+  let checkItem, reason;
+  if(op==='放冷停机'){
+    checkItem=`【${sys}蓄冷罐放冷开始通告】[检查项目]:
+1、检查确认1#冷站制冷单元预冷模式对蓄冷罐放冷
+2、制冷单元所有阀门、冷冻泵、冷却泵、冷却塔状态检查确认正常
+3、确认1运行正常，设备已安全停运`;
+    reason=`【放冷原因】:当前蓄冷罐温度达到${tT}℃`;
+  } else {
+    checkItem=`【${sys}蓄冷罐充冷开始通告】[检查项目]:
+1、检查确认1#冷站制冷单元预冷模式对蓄冷罐充冷，开启反冲冷模式
+2、制冷单元所有阀门、冷冻泵、冷却泵、冷却塔状态检查确认正常
+3、确认1运行正常，开机条件满足`;
+    reason=`【充冷原因】:当前蓄冷罐温度达到${tT}℃`;
+  }
+
+  const modeLine=`【制冷模式】:目前室外湿球温度为${oT}℃(采用${cm})[开始时间]:${fmtDate}`;
+
+  const opLine=`【当班人员】:${ops}`;
+
+  let impact='';
+  const arr=[...alarms];
+  if(extra) extra.split('\n').forEach(l=>{if(l.trim())arr.push(l.trim())});
+  if(arr.length>0){
+    impact=`【影响】:${arr.map((a,i)=>`${i+1}、${a}`).join('')}`;
+  }
+
+  const text=[checkItem,reason,modeLine,opLine,impact].filter(Boolean).join('\n');
+  document.getElementById('preview').textContent=text;
+}
+
+document.getElementById('copyBtn').onclick=()=>{
+  const t=document.getElementById('preview').textContent;
+  navigator.clipboard.writeText(t).then(()=>{
+    const b=document.getElementById('copyBtn');
+    b.textContent='✅ 已复制，去微信群粘贴发送吧';
+    setTimeout(()=>b.textContent='📋 一键复制通告',2000);
+  }).catch(()=>{
+    // 兼容方案
+    const ta=document.createElement('textarea');
+    ta.value=t;document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');document.body.removeChild(ta);
+    const b=document.getElementById('copyBtn');
+    b.textContent='✅ 已复制';
+    setTimeout(()=>b.textContent='📋 一键复制通告',2000);
+  });
+};
+
+gen();
+</script>
+</body>
+</html>
