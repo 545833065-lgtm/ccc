@@ -69,6 +69,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--brand)}
     </div>
   </div>
 
+  <button class="btn btn-ok" id="copyBtn2" style="margin-bottom:12px;padding:16px;font-size:17px">📋 一键复制通告</button>
+
   <div class="card">
     <h2 style="cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="var b=document.getElementById('dataBody');if(b.style.display==='none'){b.style.display='block'}else{b.style.display='none'}"><span>② 关键数据</span><span style="font-size:12px;color:var(--muted)">▸ 折叠/展开</span></h2>
     <div id="dataBody" style="display:none">
@@ -112,7 +114,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--brand)}
   <div class="card">
     <h2>④ 生成结果</h2>
     <div class="preview" id="preview"></div>
-    <button class="btn btn-ok" id="copyBtn">📋 一键复制通告</button>
+    <button class="btn btn-ok" id="openWxBtn" style="background:#07c160">💬 已复制，打开微信发送</button>
   </div>
 
 </div>
@@ -150,7 +152,13 @@ function checkPwd(){
     document.getElementById('pwdInput').value='';
   }
 }
-let sys='A系统', op='放冷停机';
+var sys='A系统', op='放冷停机';
+try{
+  var ss=localStorage.getItem('noticeSys');
+  if(ss) sys=ss;
+  var so=localStorage.getItem('noticeOp');
+  if(so) op=so;
+}catch(e){}
 let alarms=new Set(['末端压差告警','供水温度短暂升高','冷机电流百分比过高','冷冻水供水阀门无冗余告警','冷却水断流(星云推送相关告警)']);
 
 function updateNow(){
@@ -190,12 +198,20 @@ function fetchWetBulb(){
 fetchWetBulb();
 setInterval(fetchWetBulb,10*60*1000);
 
+// 恢复上次选中
+if(sys!=='A系统'){
+  document.querySelectorAll('#sysGrid .opt').forEach(function(x){x.classList.toggle('on',x.dataset.sys===sys)});
+}
+if(op!=='放冷停机'){
+  document.querySelectorAll('#opGrid .opt').forEach(function(x){x.classList.toggle('on',x.dataset.op===op)});
+  document.getElementById('tankTemp').value=(op==='放冷停机')?'12.5':'17';
+}
 // 系统选择
 document.querySelectorAll('#sysGrid .opt').forEach(el=>{
   el.onclick=()=>{
     document.querySelectorAll('#sysGrid .opt').forEach(x=>x.classList.remove('on'));
     el.classList.add('on');
-    sys=el.dataset.sys;
+    sys=el.dataset.sys;try{localStorage.setItem('noticeSys',sys)}catch(e){}
     gen();
   };
 });
@@ -204,7 +220,7 @@ document.querySelectorAll('#opGrid .opt').forEach(el=>{
   el.onclick=()=>{
     document.querySelectorAll('#opGrid .opt').forEach(x=>x.classList.remove('on'));
     el.classList.add('on');
-    op=el.dataset.op;
+    op=el.dataset.op;try{localStorage.setItem('noticeOp',op)}catch(e){}
     if(op==='放冷停机'){document.getElementById('tankTemp').value='12.5';}
     else{document.getElementById('tankTemp').value='17';}
     gen();
@@ -269,20 +285,34 @@ function gen(){
   document.getElementById('preview').textContent=text;
 }
 
-document.getElementById('copyBtn').onclick=()=>{
+function doCopy(cb){
   const t=document.getElementById('preview').textContent;
-  navigator.clipboard.writeText(t).then(()=>{
-    const b=document.getElementById('copyBtn');
-    b.textContent='✅ 已复制，去微信群粘贴发送吧';
-    setTimeout(()=>b.textContent='📋 一键复制通告',2000);
-  }).catch(()=>{
-    // 兼容方案
-    const ta=document.createElement('textarea');
+  function ok(){ if(cb)cb(); }
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(t).then(ok).catch(function(){
+      var ta=document.createElement('textarea');
+      ta.value=t;document.body.appendChild(ta);ta.select();
+      document.execCommand('copy');document.body.removeChild(ta);ok();
+    });
+  } else {
+    var ta=document.createElement('textarea');
     ta.value=t;document.body.appendChild(ta);ta.select();
-    document.execCommand('copy');document.body.removeChild(ta);
-    const b=document.getElementById('copyBtn');
-    b.textContent='✅ 已复制';
-    setTimeout(()=>b.textContent='📋 一键复制通告',2000);
+    document.execCommand('copy');document.body.removeChild(ta);ok();
+  }
+}
+document.getElementById('copyBtn2').onclick=function(){
+  doCopy(function(){
+    document.getElementById('copyBtn2').textContent='✅ 已复制';
+    setTimeout(function(){document.getElementById('copyBtn2').textContent='📋 一键复制通告'},2000);
+  });
+};
+document.getElementById('openWxBtn').onclick=function(){
+  doCopy(function(){
+    document.getElementById('openWxBtn').textContent='✅ 已复制，正在打开微信...';
+    setTimeout(function(){
+      window.location.href='weixin://';
+      setTimeout(function(){document.getElementById('openWxBtn').textContent='💬 已复制，打开微信发送'},2000);
+    },500);
   });
 };
 
