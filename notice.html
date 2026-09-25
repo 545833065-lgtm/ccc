@@ -53,6 +53,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--brand)}
   <h1>📢 设备开关机通告生成器</h1>
 
 </div>
+<div style="padding:0 14px;margin-top:-10px;margin-bottom:10px">
+  <button onclick="addToHome()" style="width:100%;padding:12px;background:#fff;border:1.5px dashed var(--brand);color:var(--brand);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">📱 添加到手机桌面</button>
+</div>
 <div class="wrap">
 
   <div class="card">
@@ -347,6 +350,22 @@ document.getElementById('openWxBtn').onclick=function(){
 
 renderStatus();
 gen();
+
+var deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e});
+function addToHome(){
+  var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  var isAndroid=/android/i.test(navigator.userAgent);
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+  } else if(isIOS){
+    alert('添加方法：\n1. 点底部 Safari 分享按钮（方框向上箭头）\n2. 往下滑点"添加到主屏幕"\n3. 点右上角"添加"');
+  } else if(isAndroid){
+    alert('添加方法：\n1. 点浏览器菜单（三个点）\n2. 选"添加到主屏幕"或"安装应用"');
+  } else {
+    alert('请用浏览器菜单选择"添加到主屏幕"');
+  }
+}
 </script>
 </body>
 </html>
