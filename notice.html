@@ -82,7 +82,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--brand)}
       <div><label class="fld">蓄冷罐温度(℃)</label><input type="number" id="tankTemp" step="0.1" value="12.5"></div>
       <div><label class="fld">室外湿球温度(℃) <span id="wbStatus" style="color:var(--ok);font-size:11px">●实时</span></label><input type="number" id="outTemp" step="0.1" value="23.8"></div>
     </div>
-    <div style="margin-bottom:10px;background:var(--brand-l);padding:10px 12px;border-radius:8px;font-size:13px;color:var(--brand-d)">⏱ 自动使用当前时间：<b id="nowTime"></b></div>
+    <div style="margin-bottom:10px;background:var(--brand-l);padding:10px 12px;border-radius:8px;font-size:13px;color:var(--brand)">⏱ 自动使用当前时间：<b id="nowTime"></b></div>
     <div style="margin-bottom:10px">
       <label class="fld">制冷模式</label>
       <select id="coolMode">
@@ -359,7 +359,10 @@ function addToHome(){
   var isWeChat=/MicroMessenger/i.test(navigator.userAgent);
   if(deferredPrompt){
     deferredPrompt.prompt();
-  } else if(isIOS){
+    try{localStorage.setItem('homePrompted','1')}catch(e){}
+    return;
+  }
+  if(isIOS){
     if(isWeChat){
       alert('微信内无法添加桌面！\n\n操作步骤：\n1. 点右上角"···"\n2. 选"在Safari打开"\n3. 再点本页"添加到手机桌面"按钮');
     } else {
@@ -374,7 +377,14 @@ function addToHome(){
   } else {
     alert('请用浏览器菜单选择"添加到主屏幕"');
   }
+  try{localStorage.setItem('homePrompted','1')}catch(e){}
 }
+// 只提示一次：如果已提示过，隐藏按钮
+try{
+  if(localStorage.getItem('homePrompted')==='1'){
+    document.querySelector('button[onclick="addToHome()"]').style.display='none';
+  }
+}catch(e){}
 </script>
 </body>
 </html>
