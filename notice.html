@@ -8,7 +8,7 @@
 <title>设备开关机通告生成器</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--brand:#0c4a6e;--brand-l:#e0f2fe;--ok:#16a34a;--bad:#dc2626;--bg:#f1f5f9;--card:#fff;--line:#e2e8f0;--ink:#0f172a;--muted:#64748b}
+:root{--brand:#0c4a6e;--brand-l:#e0f2fe;--ok:#16a34a;--bad:#dc2626;--bad-l:#fee2e2;--bg:#f1f5f9;--card:#fff;--line:#e2e8f0;--ink:#0f172a;--muted:#64748b}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);padding-bottom:40px}
 .hero{background:linear-gradient(135deg,#0c4a6e,#0369a1);color:#fff;padding:24px 18px 20px}
 .hero h1{font-size:20px}
@@ -118,7 +118,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--brand)}
   <div class="card">
     <h2>④ 生成结果</h2>
     <div class="preview" id="preview"></div>
-    <button class="btn btn-ok" id="openWxBtn" style="background:#07c160">💬 已复制，打开微信发送</button>
+    <button class="btn btn-ok" id="openWxBtn" style="background:#07c160">💬 复制并打开微信发送</button>
   </div>
 
 </div>
@@ -343,7 +343,7 @@ document.getElementById('openWxBtn').onclick=function(){
     document.getElementById('openWxBtn').textContent='✅ 已复制，正在打开微信...';
     setTimeout(function(){
       window.location.href='weixin://';
-      setTimeout(function(){document.getElementById('openWxBtn').textContent='💬 已复制，打开微信发送'},2000);
+      setTimeout(function(){document.getElementById('openWxBtn').textContent='💬 复制并打开微信发送'},2000);
     },500);
   });
 };
@@ -356,12 +356,21 @@ window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();def
 function addToHome(){
   var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
   var isAndroid=/android/i.test(navigator.userAgent);
+  var isWeChat=/MicroMessenger/i.test(navigator.userAgent);
   if(deferredPrompt){
     deferredPrompt.prompt();
   } else if(isIOS){
-    alert('添加方法：\n1. 点底部 Safari 分享按钮（方框向上箭头）\n2. 往下滑点"添加到主屏幕"\n3. 点右上角"添加"');
+    if(isWeChat){
+      alert('微信内无法添加桌面！\n\n操作步骤：\n1. 点右上角"···"\n2. 选"在Safari打开"\n3. 再点本页"添加到手机桌面"按钮');
+    } else {
+      alert('添加方法：\n1. 点底部 Safari 分享按钮（方框向上箭头）\n2. 往下滑点"添加到主屏幕"\n3. 点右上角"添加"');
+    }
   } else if(isAndroid){
-    alert('添加方法：\n1. 点浏览器菜单（三个点）\n2. 选"添加到主屏幕"或"安装应用"');
+    if(isWeChat){
+      alert('微信内无法添加桌面！\n\n操作步骤：\n1. 点右上角"···"\n2. 选"在浏览器打开"\n3. 再点本页"添加到手机桌面"按钮');
+    } else {
+      alert('添加方法：\n1. 点浏览器菜单（三个点）\n2. 选"添加到主屏幕"或"安装应用"');
+    }
   } else {
     alert('请用浏览器菜单选择"添加到主屏幕"');
   }
