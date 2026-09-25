@@ -378,11 +378,15 @@ function addToHome(){
     alert('请用浏览器菜单选择"添加到主屏幕"');
   }
   try{localStorage.setItem('homePrompted','1')}catch(e){}
+  // 点击后立即隐藏按钮
+  var btn=document.querySelector('button[onclick="addToHome()"]');
+  if(btn) btn.style.display='none';
 }
-// 只提示一次：如果已提示过，隐藏按钮
+// 页面加载时如果已提示过，隐藏按钮
 try{
   if(localStorage.getItem('homePrompted')==='1'){
-    document.querySelector('button[onclick="addToHome()"]').style.display='none';
+    var btn2=document.querySelector('button[onclick="addToHome()"]');
+    if(btn2) btn2.style.display='none';
   }
 }catch(e){}
 </script>
